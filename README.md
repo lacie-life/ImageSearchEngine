@@ -1,1 +1,1 @@
-# Shoe-Recommender
+# BoVW mini-project
