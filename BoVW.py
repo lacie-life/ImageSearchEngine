@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import os
 from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
@@ -14,17 +15,21 @@ from sklearn.metrics.pairwise import chi2_kernel
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
 
+class_names = []
+
+def labelLoader(path):
+    global class_names
+    class_names = os.listdir(path)
+
 
 def getFiles(train, path):
     images = []
-    count = 0
     for folder in os.listdir(path):
         for file in os.listdir(os.path.join(path, folder)):
             images.append(os.path.join(path, os.path.join(folder, file)))
 
     if (train is True):
         np.random.shuffle(images)
-
     return images
 
 
@@ -34,7 +39,7 @@ def getDescriptors(sift, img):
 
 
 def readImage(img_path):
-    print(img_path)
+    # print(img_path)
     img = cv2.imread(img_path, 0)
     return cv2.resize(img, (150, 150))
 
@@ -47,8 +52,9 @@ def vstackDescriptors(descriptor_list):
     return descriptors
 
 
-def clusterDescriptors(descriptors, no_clusters):
+def clusterDescriptors(descriptors, no_clusters, batch):
     kmeans = KMeans(n_clusters=no_clusters).fit(descriptors)
+    # kmeans = MiniBatchKMeans(n_clusters=no_clusters, batch_size=batch, verbose=1).fit(descriptors)
     return kmeans
 
 
@@ -77,7 +83,7 @@ def plotHistogram(im_features, no_clusters):
     plt.ylabel("Frequency")
     plt.title("Complete Vocabulary Generated")
     plt.xticks(x_scalar + 0.4, x_scalar)
-    plt.show()
+    plt.savefig("histogram.png")
 
 
 def svcParamSelection(X, y, kernel, nfolds):
@@ -150,21 +156,20 @@ def plotConfusionMatrix(y_true, y_pred, classes,
 def plotConfusions(true, predictions):
     np.set_printoptions(precision=2)
 
-    class_names = ["boots", "flip_flops", "loafers", "sandals", "sneakers", "soccer_shoes"]
     plotConfusionMatrix(true, predictions, classes=class_names,
                         title='Confusion matrix, without normalization')
 
     plotConfusionMatrix(true, predictions, classes=class_names, normalize=True,
                         title='Normalized confusion matrix')
 
-    plt.show()
+    plt.savefig("confusions.png")
 
 
 def findAccuracy(true, predictions):
     print('accuracy score: %0.3f' % accuracy_score(true, predictions))
 
 
-def trainModel(path, no_clusters, kernel):
+def trainModel(path, no_clusters, kernel, batch):
     images = getFiles(True, path)
     print("Train images path detected.")
     sift = cv2.xfeatures2d.SIFT_create()
@@ -173,28 +178,20 @@ def trainModel(path, no_clusters, kernel):
     image_count = len(images)
 
     for img_path in images:
-        if ("boots" in img_path):
-            class_index = 0
-        elif ("flip_flops" in img_path):
-            class_index = 1
-        elif ("loafers" in img_path):
-            class_index = 2
-        elif ("sandals" in img_path):
-            class_index = 3
-        elif ("sneakers" in img_path):
-            class_index = 4
-        else:
-            class_index = 5
+        for i in range(0, len(class_names)):
+            if class_names[i] in img_path:
+                class_index = i
 
         train_labels = np.append(train_labels, class_index)
         img = readImage(img_path)
         des = getDescriptors(sift, img)
         descriptor_list.append(des)
 
-    descriptors = vstackDescriptors(descriptor_list)
-    print("Descriptors vstacked.")
 
-    kmeans = clusterDescriptors(descriptors, no_clusters)
+    # descriptors = vstackDescriptors(descriptor_list)
+    # print("Descriptors vstacked.")
+
+    kmeans = clusterDescriptors(descriptor_list, no_clusters, batch)
     print("Descriptors clustered.")
 
     im_features = extractFeatures(kmeans, descriptor_list, image_count, no_clusters)
@@ -222,14 +219,21 @@ def testModel(path, kmeans, scale, svm, im_features, no_clusters, kernel):
     true = []
     descriptor_list = []
 
+    index = list(range(0, len(class_names)))
+
+    # name_dict = dict(zip(index, class_names.copy()))
+
     name_dict = {
-        "0": "boots",
-        "1": "flip_flops",
-        "2": "loafers",
-        "3": "sandals",
-        "4": "sneakers",
-        "5": "soccer_shoes"
+        "0": class_names[0],
+        "1": class_names[1],
+        "2": class_names[2],
+        "3": class_names[3],
+        "4": class_names[4],
+        "5": class_names[5],
+        "6": class_names[6],
+        "7": class_names[7]
     }
+    print(name_dict)
 
     sift = cv2.xfeatures2d.SIFT_create()
 
@@ -241,20 +245,11 @@ def testModel(path, kmeans, scale, svm, im_features, no_clusters, kernel):
             count += 1
             descriptor_list.append(des)
 
-            if ("boots" in img_path):
-                true.append("boots")
-            elif ("flip_flops" in img_path):
-                true.append("flip_flops")
-            elif ("loafers" in img_path):
-                true.append("loafers")
-            elif ("sandals" in img_path):
-                true.append("sandals")
-            elif ("sneakers" in img_path):
-                true.append("sneakers")
-            else:
-                true.append("soccer_shoes")
-
-    descriptors = vstackDescriptors(descriptor_list)
+            for i in range(0, len(class_names)):
+                if class_names[i] in img_path:
+                    print(img_path)
+                    print(class_names[i])
+                    true.append(class_names[i])
 
     test_features = extractFeatures(kmeans, descriptor_list, count, no_clusters)
 
@@ -275,19 +270,19 @@ def testModel(path, kmeans, scale, svm, im_features, no_clusters, kernel):
     print("Execution done.")
 
 
-def execute(train_path, test_path, no_clusters, kernel):
-    kmeans, scale, svm, im_features = trainModel(train_path, no_clusters, kernel)
+def execute(train_path, test_path, no_clusters, kernel, batch):
+    kmeans, scale, svm, im_features = trainModel(train_path, no_clusters, kernel, batch)
     testModel(test_path, kmeans, scale, svm, im_features, no_clusters, kernel)
-
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_path', action="store", dest="train_path", required=True)
-    parser.add_argument('--test_path', action="store", dest="test_path", required=True)
-    parser.add_argument('--no_clusters', action="store", dest="no_clusters", default=50)
+    parser.add_argument('--train_path', action="store", dest="train_path", default="/home/jun/Github/BoVW/random-2/train")
+    parser.add_argument('--test_path', action="store", dest="test_path", default="/home/jun/Github/BoVW/random-2/test")
+    parser.add_argument('--word', action="store", dest="word", default=500)
+    parser.add_argument('--batch', action="store", dest="batch", default=3000)
     parser.add_argument('--kernel_type', action="store", dest="kernel_type", default="linear")
 
     args = vars(parser.parse_args())
@@ -295,4 +290,6 @@ if __name__ == '__main__':
         print("Kernel type must be either linear or precomputed")
         exit(0)
 
-    execute(args['train_path'], args['test_path'], int(args['no_clusters']), args['kernel_type'])
+    labelLoader(args['train_path'])
+    print(class_names)
+    execute(args['train_path'], args['test_path'], int(args['word']), args['kernel_type'], args['batch'])
