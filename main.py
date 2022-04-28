@@ -27,9 +27,6 @@ test_id = []
 test_img_bow = []
 test_img_bow_label = []
 
-word_num = 300
-batch = 30000
-
 descriptor_list = []
 
 def labelLoader(path):
@@ -40,12 +37,12 @@ def labelLoader(path):
 def readImage(img_path):
     # print(img_path)
     img = cv2.imread(img_path, 0)
-    return cv2.resize(img, (280, 280))
+    return cv2.resize(img, (150, 150))
 
 
 def clusterDescriptors(descriptors, no_clusters, batch):
-    kmeans = KMeans(n_clusters=no_clusters).fit(descriptors)
-    # kmeans = MiniBatchKMeans(n_clusters=no_clusters, batch_size=batch, verbose=1).fit(descriptors)
+    #kmeans = KMeans(n_clusters=no_clusters).fit(descriptors)
+    kmeans = MiniBatchKMeans(n_clusters=no_clusters, batch_size=batch, verbose=1).fit(descriptors)
     return kmeans
 
 
@@ -91,7 +88,7 @@ def Run(train_path, test_path, no_clusters, batch):
 
         kp, des = sift.detectAndCompute(img, None)
 
-        histo = np.zeros(word_num)
+        histo = np.zeros(no_clusters)
         nkp = np.size(kp)  # nkp: number of keypoints
 
         for d in des:
@@ -107,6 +104,7 @@ def Run(train_path, test_path, no_clusters, batch):
 
     # Create histogram of features for each testing image
     for img_path in test_image_list:
+        print(img_path)
         for i in range(0, len(class_names)):
             if class_names[i] in img_path:
                 class_index = i
@@ -115,7 +113,7 @@ def Run(train_path, test_path, no_clusters, batch):
 
         kp, des = sift.detectAndCompute(img, None)
 
-        histo = np.zeros(word_num)
+        histo = np.zeros(no_clusters)
         nkp = np.size(kp)  # nkp: number of keypoints
 
         for d in des:
@@ -149,10 +147,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--train_path', action="store", dest="train_path",
-                        default="/home/jun/Github/BoVW/random/train")
+                        default="/home/jun/Github/BoVW/256_objectcategories/mid-train")
     parser.add_argument('--test_path', action="store", dest="test_path",
-                        default="/home/jun/Github/BoVW/random/test")
-    parser.add_argument('--word', action="store", dest="word_num", default=500)
+                        default="/home/jun/Github/BoVW/256_objectcategories/mid-test")
+    parser.add_argument('--word', action="store", dest="word_num", default=1000)
     parser.add_argument('--batch', action="store", dest="batch", default=3000)
 
     args = vars(parser.parse_args())
