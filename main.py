@@ -8,7 +8,6 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
 from sklearn import svm, datasets
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics.pairwise import chi2_kernel
@@ -54,6 +53,61 @@ def getFiles(train, path):
     if (train is True):
         np.random.shuffle(images)
     return images
+
+
+def plotConfusionMatrix(y_true, y_pred, classes,
+                          normalize=False,
+                          title=None,
+                          cmap=plt.cm.Blues):
+    if not title:
+        if normalize:
+            title = 'Normalized confusion matrix'
+        else:
+            title = 'Confusion matrix, without normalization'
+
+    cm = confusion_matrix(y_true, y_pred)
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    ax.figure.colorbar(im, ax=ax)
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           xticklabels=classes, yticklabels=classes,
+           title=title,
+           ylabel='True label',
+           xlabel='Predicted label')
+
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black")
+    fig.tight_layout()
+    return ax
+
+
+def plotConfusions(true, predictions):
+    np.set_printoptions(precision=2)
+
+    plotConfusionMatrix(true, predictions, classes=class_names,
+                      title='Confusion matrix, without normalization')
+
+    plotConfusionMatrix(true, predictions, classes=class_names, normalize=True,
+                      title='Normalized confusion matrix')
+
+    plt.savefig("confusion_matrix.png")
 
 
 def Run(train_path, test_path, no_clusters, batch):
@@ -135,8 +189,11 @@ def Run(train_path, test_path, no_clusters, batch):
     Y_test = np.array(test_img_bow_label)
 
     classifier = SVC(C=5, kernel='rbf', gamma='scale')
-    classifier.fit(X,Y)
+    classifier.fit(X, Y)
     res = classifier.predict(X_test)
+
+    plotConfusions(test_img_bow_label, res)
+    print("Confusion matrixes plotted.")
 
     accuracy = sum(res==Y_test)/len(Y_test)
     print(accuracy)
@@ -147,10 +204,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--train_path', action="store", dest="train_path",
-                        default="/home/jun/Github/BoVW/256_objectcategories/mid-train")
+                        default="/home/jun/Github/BoVW/random/train")
     parser.add_argument('--test_path', action="store", dest="test_path",
-                        default="/home/jun/Github/BoVW/256_objectcategories/mid-test")
-    parser.add_argument('--word', action="store", dest="word_num", default=1000)
+                        default="/home/jun/Github/BoVW/random/test")
+    parser.add_argument('--word', action="store", dest="word_num", default=500)
     parser.add_argument('--batch', action="store", dest="batch", default=3000)
 
     args = vars(parser.parse_args())
