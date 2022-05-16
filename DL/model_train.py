@@ -17,7 +17,7 @@ torch.cuda.empty_cache()
 
 model = torch.hub.load('pytorch/vision:v0.10.0', 'vgg11', pretrained=False).cuda()
     
-BASE_DIR = '/home/jun/Github/BoVW/dataset'
+BASE_DIR = '/home/jun/Github/BoVW/dataset/'
 impath = os.listdir(BASE_DIR + 'train')
 
 train_ds = Dataset(BASE_DIR)

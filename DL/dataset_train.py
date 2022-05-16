@@ -26,7 +26,7 @@ class Dataset(dataset):
                 for i in range(0, len(self.classes_name)):
                     if path == self.classes_name[i]:
                         self.train_id.append(i)
-                        print(self.classes_name[i])
+                        # print(self.classes_name[i])
                 
             # Choose randomly 10% images for testing and 90% images for training
             # y=np.arange(6000)
