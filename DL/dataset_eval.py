@@ -1,7 +1,6 @@
 import torch
 from torch.utils.data import Dataset as dataset
 import os
-import SimpleITK as sitk
 import numpy as np
 import cv2
 

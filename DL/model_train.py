@@ -4,7 +4,7 @@ import torchvision
 import torchvision.transforms as transforms
 import os
 import cv2
-from dataset import Dataset
+from dataset_train import Dataset
 from torch.utils.data import DataLoader
 from time import time
 import torch.nn as nn
@@ -12,43 +12,22 @@ import torch.nn.functional as F
 from visdom import Visdom
 import numpy as np
 
-# visdom
-# viz = Visdom()
-# step_list = [0]
-# win = viz.line(X=np.array([0]), Y=np.array([1.0]), opts=dict(title='loss'))
 
-# class GarmentClassifier(nn.Module):
-#     def __init__(self):
-#         super(GarmentClassifier, self).__init__()
-#         self.conv1 = nn.Conv2d(1, 6, 5)
-#         self.pool = nn.MaxPool2d(2, 2)
-#         self.conv2 = nn.Conv2d(6, 16, 5)
-#         self.fc1 = nn.Linear(16 * 4 * 4, 120)
-#         self.fc2 = nn.Linear(120, 84)
-#         self.fc3 = nn.Linear(84, 10)
+torch.cuda.empty_cache()
 
-#     def forward(self, x):
-#         x = self.pool(F.relu(self.conv1(x)))
-#         x = self.pool(F.relu(self.conv2(x)))
-#         x = x.view(-1, 16 * 4 * 4)
-#         x = F.relu(self.fc1(x))
-#         x = F.relu(self.fc2(x))
-#         x = self.fc3(x)
-#         return x
-
-# model = GarmentClassifier().cuda()
 model = torch.hub.load('pytorch/vision:v0.10.0', 'vgg11', pretrained=False).cuda()
     
-BASE_DIR = 'D:/CV Course/FashionMNIST/data/'
+BASE_DIR = '/home/jun/Github/BoVW/dataset'
 impath = os.listdir(BASE_DIR + 'train')
 
 train_ds = Dataset(BASE_DIR)
-train_dl = DataLoader(train_ds, batch_size=64, shuffle=True)
+train_dl = DataLoader(train_ds, batch_size=1, shuffle=True)
 
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 start = time()
+
 for epoch in range (1):
     print('EPOCH {}:'.format(epoch + 1))
 
