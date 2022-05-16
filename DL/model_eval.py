@@ -4,7 +4,7 @@ import os
 import torch
 import cv2
 
-BASE_DIR = 'D:/CV Course/FashionMNIST/data/'
+BASE_DIR = '../data/'
 from collections import OrderedDict
 new_state_dict = OrderedDict()
 state_dict = torch.load(BASE_DIR + 'net14-0.012.pth')
@@ -18,7 +18,7 @@ model = torch.nn.DataParallel(torch.hub.load('pytorch/vision:v0.10.0', 'alexnet'
 model.load_state_dict(new_state_dict)
 model.eval()
 
-test_img = cv2.imread(BASE_DIR + 'train/0/1.jpg')
+test_img = cv2.imread(BASE_DIR + 'train/city/city-001.jpg')
 # test_img = cv2.resize(test_img, (224,224), interpolation=cv2.INTER_CUBIC)
 test_img = np.moveaxis(test_img,2,0)
 test_img = torch.FloatTensor(test_img).cuda().unsqueeze(0)

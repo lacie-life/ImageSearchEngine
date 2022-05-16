@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from visdom import Visdom
 import numpy as np
 
-# 设置visdom
+# visdom
 # viz = Visdom()
 # step_list = [0]
 # win = viz.line(X=np.array([0]), Y=np.array([1.0]), opts=dict(title='loss'))
