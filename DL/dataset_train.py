@@ -28,16 +28,6 @@ class Dataset(dataset):
                         self.train_id.append(i)
                         # print(self.classes_name[i])
                 
-            # Choose randomly 10% images for testing and 90% images for training
-            # y=np.arange(6000)
-            # np.random.shuffle(y)
-            # print(y.shape, len(image_path), len(image_id))
-            # self.train_image_list += [self.image_path[i] for i in y[0:6000]]
-            # self.train_id += [self.image_id[i] for i in y[0:6000]]
-            
-            # for i in range (len(y)):
-            #     self.train_image_list.append(image_path[i])
-            #     self.train_id.append(image_id[i])
 
     def __getitem__(self, index):
         # print(self.train_image_list[index], self.train_id[index], index)
