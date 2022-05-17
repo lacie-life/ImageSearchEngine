@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset as dataset
+from torchvision import transforms as tvtsf
 import os
 import numpy as np
 import cv2
@@ -31,6 +32,7 @@ class Dataset(dataset):
 
         image = cv2.imread(self.image_list[index])
         image = cv2.resize(image, (224,224), interpolation=cv2.INTER_CUBIC)
+
         image = np.moveaxis(image,2,0)
         label = self.id[index]
 
